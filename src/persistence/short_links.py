@@ -39,9 +39,12 @@ class ShortLinkRepository:
     rather than merely working around a thread-safety bug (FR-SVC-009).
     """
 
-    def __init__(self, conn: sqlite3.Connection):
+    def __init__(self, conn: sqlite3.Connection, lock: threading.Lock | None = None):
         self._conn = conn
-        self._lock = threading.Lock()
+        # Accept an externally-shared lock when this connection is also used by
+        # other repositories (e.g. orchestration_store.py) so all access to the
+        # single shared connection is serialized through one lock, not several.
+        self._lock = lock if lock is not None else threading.Lock()
 
     def is_active_code_taken(self, short_code: str) -> bool:
         with self._lock:
