@@ -27,14 +27,18 @@ def test_redirect_to_unknown_short_code_returns_404_not_found():
 
 
 def test_redirect_to_expired_short_code_returns_410_expired():
+    import uuid
     from datetime import datetime, timedelta, timezone
 
     from src.api.app import app, _short_link_repo
     from src.persistence.short_links import ShortLink
 
     client = TestClient(app)
+    # Unique per run: the shared app db (url_shortener.db) persists across test runs,
+    # so a fixed literal code would collide with a row inserted by a prior run.
+    code = f"exp{uuid.uuid4().hex[:6]}"
     expired_link = ShortLink(
-        short_code="expire1",
+        short_code=code,
         target_url="https://example.com/expired",
         created_at=datetime.now(timezone.utc) - timedelta(days=100),
         expires_at=datetime.now(timezone.utc) - timedelta(days=10),
@@ -42,7 +46,7 @@ def test_redirect_to_expired_short_code_returns_410_expired():
     )
     _short_link_repo.create(expired_link)
 
-    response = client.get("/expire1", follow_redirects=False)
+    response = client.get(f"/{code}", follow_redirects=False)
 
     assert response.status_code == 410
     assert response.json()["error_code"] == "EXPIRED"
