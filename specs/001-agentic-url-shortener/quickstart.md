@@ -124,10 +124,10 @@ curl -s http://localhost:8000/v1/workflows/<run_id>/impact-analysis | jq
 
 ## Validation Scenario 5 — Safe-Stop on Approval Timeout (User Story 4 / Edge Case)
 
-Run with a shortened test-only timeout override (implementation MUST expose a test hook for this — e.g., a config override — rather than actually waiting 24 hours):
+Run using the injectable clock abstraction (`src/orchestration/clock.py`, `tasks.md` T038) to fast-forward simulated time past the 24h gate timeout, rather than actually waiting 24 hours:
 
 ```bash
-# (test harness fast-forwards the gate's internal clock past 24h)
+# (test harness injects a fast-forwarded clock via src/orchestration/clock.py)
 pytest tests/orchestration/test_safe_stop_on_timeout.py -v
 ```
 
