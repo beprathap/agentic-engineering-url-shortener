@@ -1,0 +1,218 @@
+openapi: 3.1.0
+info:
+  title: Agentic URL Shortener API
+  version: 1.0.0
+  description: >
+    Public, unauthenticated (per D-001) API surface for short-link creation,
+    redirect resolution, and basic analytics. Contract version 1.0.0 is the
+    initial version; ownership is the human project owner. Any breaking change
+    (removed field, changed type, removed endpoint) requires a MAJOR version
+    bump, a recorded impact analysis (affected consumers, tests, docs,
+    migration steps), and human change approval per Constitution Principle VI.
+servers:
+  - url: http://localhost:8000
+    description: Local single-node deployment (per CON-002/AS-002)
+paths:
+  /v1/links:
+    post:
+      operationId: createShortLink
+      summary: Create a new short link
+      description: >
+        Always mints a new, distinct short code, even if target_url was
+        previously shortened (no de-duplication; Clarifications 2026-09-24).
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional client-supplied key; identical creation requests with the same key return the original result (FR-SVC-008).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShortLinkRequest'
+            examples:
+              basic:
+                value: { "target_url": "https://example.com/some/long/path" }
+              withExpiration:
+                value: { "target_url": "https://example.com/some/long/path", "expires_at": "2026-12-31T00:00:00Z" }
+      responses:
+        '201':
+          description: Short link created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortLink'
+              examples:
+                created:
+                  value:
+                    short_code: "aZ3kP9q"
+                    target_url: "https://example.com/some/long/path"
+                    created_at: "2026-09-24T12:00:00Z"
+                    expires_at: "2026-12-23T12:00:00Z"
+                    status: "active"
+        '400':
+          description: Invalid or disallowed URL (FR-SVC-002)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disallowedScheme:
+                  value: { "error_code": "INVALID_URL", "message": "URL scheme is not allowed." }
+        '503':
+          description: Persistence layer unavailable (FR-SVC-010)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                storeDown:
+                  value: { "error_code": "STORE_UNAVAILABLE", "message": "Unable to persist the short link at this time." }
+  /v1/links/{short_code}:
+    get:
+      operationId: getShortLinkDetail
+      summary: Get short link detail and analytics
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-zA-Z]{7}$'
+      responses:
+        '200':
+          description: Short link detail with analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortLinkDetail'
+        '404':
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /{short_code}:
+    get:
+      operationId: resolveRedirect
+      summary: Resolve a short code to its target URL
+      description: >
+        Distinguishes not_found from expired (FR-SVC-005). This endpoint is
+        intentionally outside the /v1 prefix since it is the public-facing
+        redirect surface, not a versioned management API.
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-zA-Z]{7}$'
+      responses:
+        '302':
+          description: Redirect to target_url
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '404':
+          description: Short code was never issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  value: { "error_code": "NOT_FOUND", "message": "No such short link." }
+        '410':
+          description: Short code existed but has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                expired:
+                  value: { "error_code": "EXPIRED", "message": "This short link has expired." }
+  /healthz:
+    get:
+      operationId: getHealth
+      summary: Liveness/readiness signal (FR-SVC-011)
+      responses:
+        '200':
+          description: Service is ready to serve traffic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: Service is not ready / degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+components:
+  schemas:
+    CreateShortLinkRequest:
+      type: object
+      required: [target_url]
+      properties:
+        target_url:
+          type: string
+          format: uri
+          description: Must use an allowed scheme (http/https only; FR-SVC-002).
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional. If omitted, default expiration applies (PVT-001, pending approval).
+    ShortLink:
+      type: object
+      required: [short_code, target_url, created_at, status]
+      properties:
+        short_code:
+          type: string
+          pattern: '^[0-9a-zA-Z]{7}$'
+        target_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [active, expired, deleted]
+    ShortLinkDetail:
+      allOf:
+        - $ref: '#/components/schemas/ShortLink'
+        - type: object
+          properties:
+            redirect_count:
+              type: integer
+              minimum: 0
+            last_accessed_at:
+              type: string
+              format: date-time
+              nullable: true
+    ErrorResponse:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready, degraded]
+        details:
+          type: string

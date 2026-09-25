@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-url-shortener.local/schemas/approval.schema.json",
+  "title": "Decision",
+  "type": "object",
+  "required": ["decision_id", "run_id", "decision_type", "actor_role_capacity", "rationale", "created_at"],
+  "properties": {
+    "decision_id": { "type": "string", "format": "uuid" },
+    "run_id": { "type": "string", "format": "uuid" },
+    "decision_type": {
+      "type": "string",
+      "enum": ["approval", "rejection", "clarification_answer", "exception_approval"]
+    },
+    "actor_role_capacity": {
+      "type": "string",
+      "description": "Which capacity the single human operator acted in (D-002), e.g. reviewer_approver, release_owner.",
+      "enum": ["reviewer_approver", "release_owner", "assessment_reviewer"]
+    },
+    "rationale": { "type": "string", "minLength": 1 },
+    "conditions": {
+      "type": "string",
+      "description": "Optional conditions attached to an approval."
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

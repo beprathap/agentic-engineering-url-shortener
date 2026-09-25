@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-url-shortener.local/schemas/workflow-state.schema.json",
+  "title": "WorkflowInstance",
+  "type": "object",
+  "required": ["run_id", "requirement_id", "current_stage", "status", "created_at", "updated_at"],
+  "properties": {
+    "run_id": { "type": "string", "format": "uuid" },
+    "requirement_id": { "type": "string" },
+    "current_stage": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "clarification_pending",
+        "approval_pending",
+        "rejected",
+        "retrying",
+        "replanning",
+        "safe_stopped",
+        "completed",
+        "failed"
+      ]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
