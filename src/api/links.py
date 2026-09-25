@@ -33,6 +33,11 @@ class ErrorResponse(BaseModel):
     message: str
 
 
+class ShortLinkDetailResponse(ShortLinkResponse):
+    redirect_count: int
+    last_accessed_at: str | None
+
+
 def register_links_routes(router: APIRouter, repo: ShortLinkRepository) -> None:
     @router.post("/v1/links", status_code=201, response_model=None, responses={400: {"model": ErrorResponse}})
     def create_short_link(payload: CreateShortLinkRequest, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
@@ -77,6 +82,25 @@ def register_links_routes(router: APIRouter, repo: ShortLinkRepository) -> None:
             created_at=link.created_at.isoformat(),
             expires_at=link.expires_at.isoformat() if link.expires_at else None,
             status=link.status,
+        )
+
+    @router.get("/v1/links/{short_code}", response_model=None, responses={404: {"model": ErrorResponse}})
+    def get_short_link_detail(short_code: str):
+        link = repo.get(short_code)
+        if link is None:
+            return JSONResponse(
+                status_code=404,
+                content=ErrorResponse(error_code="NOT_FOUND", message="No such short link.").model_dump(),
+            )
+        count, last_accessed = repo.get_analytics(short_code)
+        return ShortLinkDetailResponse(
+            short_code=link.short_code,
+            target_url=link.target_url,
+            created_at=link.created_at.isoformat(),
+            expires_at=link.expires_at.isoformat() if link.expires_at else None,
+            status=link.status,
+            redirect_count=count,
+            last_accessed_at=last_accessed.isoformat() if last_accessed else None,
         )
 
     @router.get("/{short_code}", response_model=None, responses={404: {"model": ErrorResponse}, 410: {"model": ErrorResponse}})
