@@ -1,5 +1,7 @@
 # Clean-Clone Verification
 
+*Clean-clone verification*
+
 **Performed**: 2026-09-25, immediately before tagging the final submission.
 
 ```bash

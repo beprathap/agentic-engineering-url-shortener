@@ -1,6 +1,6 @@
 # Final Principal Engineer Assessment
 
-This review examines the completed repository as an independent and skeptical assessment panel. The reviewer did not defend prior decisions or recommendations and focused on the final implemented state.
+*Reviewing the complete, finished repository as an independent and skeptical assessment panel. I assisted with development; I do not defend prior outputs, recommendations, or architectural choices here.*
 
 ## Sources Reviewed
 
@@ -21,7 +21,7 @@ Official assessment requirements (the guidance document), `.specify/memory/const
 | 9 | Human approval enforcement | 5 | No path found that reaches N6/N9/N14 without a recorded Decision; timeout always routes to SAFE_STOP, never auto-approval — tested, not just asserted |
 | 10 | Retry, fallback, timeout, safe-stop | 5 | Uniformly wired after Phase 12 convergence closed the N6/N7/N11 gap; timeout is clock-injectable and genuinely tested, not hand-waved |
 | 11 | Rollback or compensation | 4 | Real classification logic (keyword-based, disclosed as simple) distinguishes the two; keyword-based classification is a real weakness a hostile reviewer would flag — it's a heuristic, not semantic understanding |
-| 12 | Resume and recovery | 5 | The one place this repo goes further than "good enough": an actual OS process is killed via `subprocess`/`os._exit`, not an in-process simulation — directly responds to the Section 14 correction |
+| 12 | Resume and recovery | 5 | The one place this repo goes further than "good enough": an actual OS process is killed via `subprocess`/`os._exit`, not an in-process simulation — directly responds to the reviewer-gate correction |
 | 13 | Dynamic replanning | 4 | Version-stamped, contract-shape-diff-based material/cosmetic classification; the diff is a dict-equality check, not a semantic compatibility analysis — adequate for demonstration, not production-grade |
 | 14 | Decision lineage | 5 | Every `Decision` carries `run_id`, `actor_role_capacity`, `rationale`, timestamp; queryable, append-only |
 | 15 | Traceability | 5 | Full matrix in the convergence report; every FR/NFR maps to specific code and tests, checked at report time, not from memory |

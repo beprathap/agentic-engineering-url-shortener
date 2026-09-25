@@ -1,6 +1,6 @@
 # Brownfield Impact-Analysis Gate
 
-This review was produced without modifying code and reflects a live execution of the implemented system.
+*Produced without modifying code, from a live execution of the implemented system.*
 
 ## Change Impact Summary
 

@@ -2,7 +2,7 @@
 
 **Generated**: 2026-09-25 · **Feature**: 001-agentic-url-shortener · **Commits covered**: `820f358`..`92ab3d5` (39 commits)
 
-This is the full convergence pass: verification across requirements, architecture, orchestration, all three scenarios, testing, documentation, and compliance/change-control, followed by the required outputs and one release-readiness decision. The gap-analysis already ran and closed the final implementation gaps; this report is the broader synthesis for reviewer context.
+This is the full convergence pass: verification across requirements, architecture, orchestration, all three scenarios, testing, documentation, and compliance/change-control, followed by the required outputs and one release-readiness decision. The mechanical gap-analysis (`/speckit-converge`) already ran and appended/closed Phase 12 (T118–T120, see `tasks.md` and commits `e132df5`..`92ab3d5`); this report is the broader synthesis of that work.
 
 ## Requirements
 
@@ -146,14 +146,14 @@ Bounded retry (3 attempts, 200ms exponential backoff) now applied uniformly acro
 | Risk | Severity | Disclosure |
 |---|---|---|
 | HTTP API doesn't wire full N2–N14 pipeline | Medium | `quickstart.md`, this report |
-| Brownfield demo uses same-session code, not real legacy | Low | plan.md known limitations |
-| Greenfield auto-qualified approval could become rubber-stamp in careless use | Low | plan.md known limitations |
+| Brownfield demo uses same-session code, not real legacy | Low | `plan.md` §Known Limitations |
+| Greenfield auto-qualified approval could become rubber-stamp in careless use | Low | `plan.md` §Known Limitations |
 | Single-writer SQLite ceiling under heavy concurrent load | Low | ADR-003 |
 | No rate limiting | Low | EXC-006 |
 
 ### 7. Known Limitations
 
-See the project plan's known limitations (4 items) plus the HTTP-pipeline-scope item disclosed in `quickstart.md` and reiterated in the risk register above.
+See `plan.md` §Known Limitations (4 items) plus the HTTP-pipeline-scope item disclosed in `quickstart.md` and reiterated in the risk register above.
 
 ### 8. Residual Risks
 
@@ -172,11 +172,11 @@ AS-001..005 (spec.md) all confirmed/closed via the clarification session (2026-0
 
 ### 11. Reviewer Navigation Guide
 
-A reviewer guide is the next supporting artifact after this convergence report and the final assessment.
+Not yet produced as a standalone document — this is the next step after this convergence report and the Final Independent Assessment.
 
 ### 12. Final Engineering Summary
 
-The final engineering summary is the broader narrative document that follows the convergence report and the independent assessment.
+Not yet produced — this is the mandatory 21-section document, scheduled after the Final Independent Assessment and resolution of mandatory findings.
 
 ### 13. Release-Readiness Decision
 

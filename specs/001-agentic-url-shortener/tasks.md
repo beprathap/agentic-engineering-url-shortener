@@ -8,7 +8,7 @@ description: "Task list for Agentic Software Engineering System: URL Shortener"
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md, docs/adr/ (all present and accepted)
 
-**Revision note (2026-09-24, rev. 2)**: This revision incorporates the `/speckit-analyze` pre-implementation findings (F1–F7), the human's batch approval of PVT-001..004 and AMB-006, and the Section 14 Independent Reviewer Gate's required corrections. Key structural change (F1): the shared bounded-retry utility and SAFE_STOP cross-cutting state — originally scheduled in the US7 phase — are moved into the Foundational phase, since ADR-007's "shared default policy applied to every node" design means multiple earlier user stories (US1, US3) implicitly depend on this infrastructure existing first. Reviewer-gate correction: an injectable time/clock abstraction (T038) is added to Foundational, since 24-hour gate timeouts and retry backoff must be testable without real-time waiting; the resumption test (T105) is strengthened to require an actual process kill/restart rather than an in-process simulation, with an explicit fallback-and-disclose path if that proves infeasible. All task IDs below are renumbered sequentially; prior revisions' task IDs no longer apply.
+**Revision note (2026-09-24, rev. 2)**: This revision incorporates the `/speckit-analyze` pre-implementation findings (F1–F7), the human's batch approval of PVT-001..004 and AMB-006, and the independent reviewer-gate corrections. Key structural change (F1): the shared bounded-retry utility and SAFE_STOP cross-cutting state — originally scheduled in the US7 phase — are moved into the Foundational phase, since ADR-007's "shared default policy applied to every node" design means multiple earlier user stories (US1, US3) implicitly depend on this infrastructure existing first. Reviewer-gate correction: an injectable time/clock abstraction (T038) is added to Foundational, since 24-hour gate timeouts and retry backoff must be testable without real-time waiting; the resumption test (T105) is strengthened to require an actual process kill/restart rather than an in-process simulation, with an explicit fallback-and-disclose path if that proves infeasible. All task IDs below are renumbered sequentially; prior revisions' task IDs no longer apply.
 
 **Tests**: Included — Constitution Principle IV mandates red-green-refactor TDD; every implementation task is paired with a preceding failing-test task.
 
@@ -83,7 +83,7 @@ Single project per `plan.md` Project Structure: `src/`, `tests/` at repository r
 - [x] T035 Implement `src/orchestration/engine.py`: async executor base (sequential edge traversal, `AuditEvent` emission per transition) (depends on T032, T034) [FR-ORC-014, ADR-005]
 - [x] T036 [P] Unit test *(closes analyze finding F2)*: the `AuditEvent` repository and API expose no update/delete operation (append-only invariant), in `tests/unit/test_audit_append_only.py` — write failing first [NFR-006, ADR-010]
 - [x] T037 Implement `AuditEvent` repository in `src/persistence/orchestration_store.py` with no update/delete method exposed (depends on T032, T036) [NFR-006]
-- [x] T038 Implement an injectable time/clock abstraction (`src/orchestration/clock.py`) used by every gate-timeout and retry-backoff computation, with a test double that can fast-forward simulated time — required so 24-hour gate timeouts (ADR-006) and retry backoff (ADR-007) are testable without real-time waiting; identified as a required correction in the Section 14 Independent Reviewer Gate (2026-09-24) rather than left implicit (depends on T035) [ADR-006, ADR-007]
+- [x] T038 Implement an injectable time/clock abstraction (`src/orchestration/clock.py`) used by every gate-timeout and retry-backoff computation, with a test double that can fast-forward simulated time — required so 24-hour gate timeouts (ADR-006) and retry backoff (ADR-007) are testable without real-time waiting; identified as a required independent reviewer-gate correction (2026-09-24) rather than left implicit (depends on T035) [ADR-006, ADR-007]
 - [x] T039 [P] Unit test *(F1: relocated from the former US7 phase)*: bounded retry (3 attempts, 200ms exponential backoff) on transient failure, using the T038 clock abstraction to assert backoff timing without real delays, in `tests/orchestration/test_retry_policy.py` — write failing first [FR-ORC-007, PVT-004 (confirmed 2026-09-24), ADR-007]
 - [x] T040 Implement the shared bounded-retry utility in `src/orchestration/engine.py` per ADR-007, using T038's clock (depends on T035, T038, T039) [FR-ORC-007]
 - [x] T041 [P] Unit test *(F1: relocated)*: SAFE_STOP entered with reason recorded when retries are exhausted and no fallback is defined, in `tests/orchestration/test_safe_stop_on_exhausted_retry.py` — write failing first [FR-ORC-010]
@@ -263,7 +263,7 @@ Single project per `plan.md` Project Structure: `src/`, `tests/` at repository r
 
 ### Tests for User Story 8
 
-- [x] T105 [P] [US8] Integration test *(strengthened per Section 14 Independent Reviewer Gate, 2026-09-24)*: resumption is proven via an actual OS-level process kill and restart of the orchestration process (not an in-process function call simulating one), asserting it resumes from persisted `WorkflowInstance.current_stage` without re-executing completed side-effecting steps, in `tests/integration/test_resumption_process_restart.py` — write failing first. If a genuine process-kill test proves infeasible within the timebox, this task must be re-scoped to an explicitly-labeled in-process simulation, with that limitation disclosed in the project plan's known limitations rather than left implicit. [FR-ORC-011]
+- [x] T105 [P] [US8] Integration test *(strengthened during independent reviewer gate, 2026-09-24)*: resumption is proven via an actual OS-level process kill and restart of the orchestration process (not an in-process function call simulating one), asserting it resumes from persisted `WorkflowInstance.current_stage` without re-executing completed side-effecting steps, in `tests/integration/test_resumption_process_restart.py` — write failing first. If a genuine process-kill test proves infeasible within the timebox, this task must be re-scoped to an explicitly-labeled in-process simulation, with that limitation disclosed in `plan.md` §Known Limitations rather than left implicit. [FR-ORC-011]
 - [x] T106 [P] [US8] Unit test: interruption and resumption both appear as audit events, in `tests/orchestration/test_resumption_audit.py` — write failing first
 
 ### Implementation for User Story 8
@@ -294,7 +294,7 @@ Single project per `plan.md` Project Structure: `src/`, `tests/` at repository r
 - [x] T114 [P] Latency test *(newly approved PVT-003)*: redirect resolution completes ≤100ms end-to-end at T113's load scale, in `tests/integration/test_latency.py` [NFR-007]
 - [x] T115 [P] Execute the full `quickstart.md` validation suite end-to-end (all 7 scenarios) [Constitution Principle XI]
 - [x] T116 [P] Run a dependency/secret scan (e.g., `pip-audit`) per `plan.md` §Security [NFR-001]
-- [x] T117 Cross-check every FR-SVC-*/FR-ORC-*/NFR-* against this task list; confirm each maps to ≥1 executed, passing test; confirm findings F1–F7 (`/speckit-analyze`) and the Section 14 Independent Reviewer Gate's required corrections (clock abstraction T038, process-restart resumption T105, brownfield/rubber-stamp disclosures in plan.md) are all closed [NFR-009, Constitution Principle X]
+- [x] T117 Cross-check every FR-SVC-*/FR-ORC-*/NFR-* against this task list; confirm each maps to ≥1 executed, passing test; confirm findings F1–F7 (`/speckit-analyze`) and the independent reviewer-gate corrections (clock abstraction T038, process-restart resumption T105, brownfield/rubber-stamp disclosures in plan.md) are all closed [NFR-009, Constitution Principle X]
 
 ---
 
@@ -313,7 +313,7 @@ Single project per `plan.md` Project Structure: `src/`, `tests/` at repository r
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies.
-- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all user stories. Now includes the clock abstraction (T038) plus the shared retry/safe-stop/failure-classification mechanism (T039–T046), per finding F1 and the Section 14 reviewer-gate correction.
+- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all user stories. Now includes the clock abstraction (T038) plus the shared retry/safe-stop/failure-classification mechanism (T039–T046), per finding F1 and the independent reviewer-gate correction.
 - **User Stories (Phases 3–11)**: All depend on Foundational completion.
   - US1–US4 (P1) completed first, in order (US1 establishes the base N1–N14 path US2/US3/US4 extend).
   - US5–US7 (P2) proceed once US1–US4 are complete.

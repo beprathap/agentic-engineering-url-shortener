@@ -1,6 +1,6 @@
 # Task-Group Checkpoint & Pre-Commit Review Backfill
 
-**Purpose**: This backfill compiles the task-group checkpoint and pre-commit review evidence after the fact so reviewers can see the implementation history, the requirements addressed, the ADRs followed, the tests-first evidence, and the validation actually executed. No new implementation work occurs here; this is evidence packaging.
+**Purpose**: The project process specifies running a Task-Group Checkpoint after every implementation group and a Pre-Commit Review before every commit. During implementation these were applied *in substance* — every commit message states requirements addressed, ADRs followed, tests-first evidence, and validation actually executed — but not emitted as separate standalone documents per group. This backfill consolidates that evidence against the checkpoint criteria, retrospectively, for reviewer verification. No new implementation work occurs here; this is evidence packaging.
 
 **Verification performed for this backfill**: `pytest -q` re-run against the current `HEAD` (commit `7430749`) immediately before writing this document — **86 passed, 0 failed** (see below). This is real, executed output, not a claim.
 
@@ -10,7 +10,7 @@
 
 | # | Commit | Task Group | Requirements / Gate |
 |---|---|---|---|
-| 1 | `820f358` | Repo scaffold, SpecKit init | Repository setup |
+| 1 | `820f358` | Repo scaffold, SpecKit init | Repository Setup |
 | 2 | `01692dd` | Constitution v1.0.0 | Human Gate 1 |
 | 3 | `a2c2302` | Feature specification | Human Gate 2 |
 | 4 | `84e359b` | Clarification (5 Q&A) | Human Gate 3 |
@@ -20,7 +20,7 @@
 | 8 | `e7c2e90` | tasks.md, initial 101 tasks | — |
 | 9 | `01998b3` | PVT-001..004 approved, AMB-006 resolved, tasks.md reworked to 117 tasks per `/speckit-analyze` findings F1–F7 | — |
 | 10 | `4b3e772` | assessment-readiness.md checklist (19 categories, 45 items) | — |
-| 11 | `d68597b` | Section 14 Independent Reviewer Gate corrections (clock abstraction task, process-restart resumption task, 4 disclosed limitations) | Section 14 gate |
+| 11 | `d68597b` | Independent reviewer-gate corrections (clock abstraction task, process-restart resumption task, 4 disclosed limitations) | Reviewer gate |
 
 No code exists yet at this point — by design (Constitution Principle I: specification before implementation). This phase's evidence is the artifact set itself, all committed and human-approved at each named gate above.
 
@@ -45,10 +45,10 @@ FR-SVC-007/009. **Real bug found**: `sqlite3.InterfaceError` under genuine concu
 FR-SVC-010/012, D-001, ADR-013. Validation: 30 passed.
 
 ### 17. `bbfb26d` — Orchestration repositories + schema fix (T032–T033)
-FR-ORC-014, ADR-010. **Contract change flagged before applying**: `audit-event.schema.json` had a real validation gap (`reason: null` passed where a non-empty reason was required); this was surfaced and approved in-session before editing, not silently patched. Validation: 32 passed.
+FR-ORC-014, ADR-010. **Contract change flagged before applying**: `audit-event.schema.json` had a real validation gap (`reason: null` passed where a non-empty reason was required); per the change-control rule requiring approval before changing a versioned audit contract, this was surfaced and approved in-session before editing, not silently patched. Validation: 32 passed.
 
 ### 18. `0415537` — DAG, clock, retry/safe-stop (T034–T042)
-FR-ORC-001/007/010, CON-003, ADR-005/006/007. This is the Section 14 reviewer-gate correction (clock abstraction) plus analyze-finding F1's fix (retry/safe-stop relocated to Foundational). Validation: 37 passed.
+FR-ORC-001/007/010, CON-003, ADR-005/006/007. This is the reviewer-gate correction (clock abstraction) plus analyze-finding F1's fix (retry/safe-stop relocated to Foundational). Validation: 37 passed.
 
 ### 19. `9186f56` — Failure classification, controlled-autonomy guard (T043–T046)
 NFR-002, NFR-011 (analyze finding F3). Validation: 41 passed.
@@ -84,7 +84,7 @@ FR-ORC-014/020. MTTR excludes unrecovered failures from its denominator (verifie
 FR-ORC-007/010, bulkheading. Validation: 80 passed.
 
 ### 30. `01e1e30` — User Story 8, resumption (T104–T107)
-FR-ORC-011. **Strengthened per Section 14 correction**: uses `subprocess.run()` to genuinely kill a separate OS process mid-workflow (`os._exit(137)`), not an in-process simulation. Validation: 81 passed.
+FR-ORC-011. **Strengthened per reviewer-gate correction**: uses `subprocess.run()` to genuinely kill a separate OS process mid-workflow (`os._exit(137)`), not an in-process simulation. Validation: 81 passed.
 
 ### 31. `9967291` — User Story 9, replanning (T108–T111)
 FR-ORC-012/013, ADR-009. Material/cosmetic classification based on actual contract-shape comparison. Validation: 84 passed — **all 9 user stories complete**.

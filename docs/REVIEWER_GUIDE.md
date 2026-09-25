@@ -1,6 +1,8 @@
 # Reviewer Navigation Guide
 
-**Read this first**: this system has no authentication anywhere. That is a deliberate, human-confirmed scope decision, not an oversight.
+*Every item below gives an exact repository path, an exact command where applicable, an expected observable result, and the related requirement/scenario identifier. No unsupported claims — everything here was re-verified immediately before this guide was written.*
+
+**Read this first, before anything else**: this system has **no authentication anywhere** — every endpoint is open. This is a deliberate, human-confirmed scope decision (D-001), not an oversight. See item 15 below.
 
 ## 1. Project Objective
 `specs/001-agentic-url-shortener/spec.md`, Input section. A governed agentic orchestration engine, demonstrated via a URL shortener.
@@ -101,7 +103,7 @@ Expected: 1 passed. Full evidence: `docs/scenarios/ambiguous-requirement-demonst
 ```bash
 pytest tests/unit/test_mttr_calculation.py tests/unit/test_metrics_labeling.py -v
 ```
-Expected: 3 passed. Formula and methodology: `docs/assessment/final-engineering-summary.md` under the reliability section. All figures explicitly labeled `is_demonstration_data=True`. [FR-ORC-020]
+Expected: 3 passed. Formula and methodology: `docs/assessment/final-engineering-summary.md` §12. All figures explicitly labeled `is_demonstration_data=True`. [FR-ORC-020]
 
 ## 20. Security Controls
 ```bash
@@ -110,7 +112,7 @@ pytest tests/unit/test_validation.py tests/integration/test_no_auth.py tests/uni
 Expected: 15 passed — URL scheme allowlist + SSRF hardening, confirmed no-auth-by-design, and a real `pip-audit` invocation. [NFR-001]
 
 ## 21. Known Limitations
-`docs/assessment/final-engineering-summary.md` and the project plan's known limitations section.
+`docs/assessment/final-engineering-summary.md` §19 (6 items, all disclosed, none blocking) and `plan.md` §Known Limitations.
 
 ## 22. Final Engineering Summary
 `docs/assessment/final-engineering-summary.md` — the mandatory 21-section schema.

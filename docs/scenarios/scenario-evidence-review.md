@@ -1,6 +1,6 @@
 # Three-Scenario Evidence Review
 
-This is a read-only review of the three scenario traces; no files were modified as part of the review.
+*Read-only review; no files modified as part of producing this review.*
 
 ## Scenario Readiness Matrix
 
@@ -19,7 +19,7 @@ This is a read-only review of the three scenario traces; no files were modified 
 | Audit evidence exists | ✅ full trail, `docs/scenarios/` (this review) | ✅ full trail, `docs/scenarios/brownfield-impact-analysis.md` | ✅ full trail, `docs/scenarios/ambiguous-requirement-demonstration.md` |
 | Documentation matches execution | ✅ | ✅ | ✅ |
 | Terminal outcome exists | ✅ `completed` | ✅ `completed` | Intentionally stops at N6 (see below) |
-| Limitations disclosed | ✅ plan.md known limitations | ✅ plan.md known limitations (demo-authenticity) | ✅ this document, item below |
+| Limitations disclosed | ✅ plan.md §Known Limitations | ✅ plan.md §Known Limitations (demo-authenticity) | ✅ this document, item below |
 
 ## Are the Three Scenarios Materially Different?
 
@@ -48,6 +48,6 @@ None found. All three scenarios:
 
 ## Mandatory Remediation
 
-None required to pass this review. One disclosed, non-blocking limitation carried forward from the project plan's known limitations applies here too: the ambiguous-requirement demonstration's terminal outcome is `tasks_decomposed`, not a full `completed` run — this is a deliberate scope choice (the N7–N14 tail is already evidenced twice by the other scenarios) and is stated as such above, not silently truncated.
+None required to pass this review. One disclosed, non-blocking limitation carried forward from `plan.md` §Known Limitations applies here too: the ambiguous-requirement demonstration's terminal outcome is `tasks_decomposed`, not a full `completed` run — this is a deliberate scope choice (the N7–N14 tail is already evidenced twice by the other scenarios) and is stated as such above, not silently truncated.
 
 **This review's own validation**: `pytest tests/integration/test_scenario_greenfield.py tests/integration/test_scenario_brownfield.py tests/integration/test_scenario_ambiguous.py -v` — 3 passed (re-run immediately before writing this document).

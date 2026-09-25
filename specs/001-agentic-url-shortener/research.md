@@ -13,7 +13,7 @@
 ## Decision 2: API Delivery Framework
 
 - **Decision**: FastAPI (with Uvicorn as the ASGI server for local execution).
-- **Rationale**: Generates an OpenAPI 3.x contract directly from typed request/response models, directly satisfying the spec's explicit, versioned API contract requirement without hand-maintaining a separate OpenAPI document that can drift from the implementation. Pydantic models double as the request/response/error schemas required by the spec.
+- **Rationale**: Generates an OpenAPI 3.x contract directly from typed request/response models, directly satisfying the spec's "explicit, versioned API contract" requirement (Plan §2) without hand-maintaining a separate OpenAPI document that can drift from the implementation. Pydantic models double as the request/response/error schemas required by the spec.
 - **Alternatives considered**:
   - **Flask**: Simpler, but does not generate an OpenAPI contract natively; would require a separate contract-maintenance step, risking spec/implementation drift (violates Constitution Principle X's "documentation must evolve with implementation").
   - **Hand-written OpenAPI + any framework**: Rejected because it creates two sources of truth that could silently diverge; FastAPI's contract-from-code approach makes the contract executable and always current.

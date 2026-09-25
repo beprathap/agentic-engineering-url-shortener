@@ -298,7 +298,7 @@ Each layer carries the identifiers from the layer above it (e.g., a task referen
 - **Minimum defensible release-readiness outcome**: all three required scenarios (A/B/C) demonstrated with generated evidence, all mandatory Constitution-derived policy checks evaluated (PASS or disclosed FAIL/exception), full audit trail reconstructable for at least one complete run of each scenario.
 - Complexity discipline: no additional distributed-system components beyond the single local process + embedded SQLite described in Project Structure; production-grade *discipline* (TDD, audit trails, policy gates) is the target, not production-*scale* infrastructure.
 
-## Known Limitations (Disclosed per Section 14 Independent Reviewer Gate, 2026-09-24)
+## Known Limitations (Disclosed during independent reviewer gate, 2026-09-24)
 
 These are recorded here so they are disclosed proactively in the Final Engineering Summary (N14) rather than discovered by a reviewer:
 
