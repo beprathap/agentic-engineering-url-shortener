@@ -85,6 +85,60 @@ def reject_requirements_gate(
     engine.transition(run_id, to_stage=return_to_stage, status="running", action="requirements_rejected", actor_type="human")
 
 
+def request_architecture_gate(engine: OrchestrationEngine, run_id: str, clock: Clock) -> datetime:
+    """N8: mandatory human approval of the design, regardless of whether N4
+    (clarification) was skipped (User Story 1 acceptance scenario 3)."""
+    requested_at = clock.now()
+    engine.emit(
+        run_id,
+        actor_type="system",
+        action="architecture_approval_requested",
+        result="pending",
+        reason="design artifact ready for human review",
+    )
+    return requested_at
+
+
+def approve_architecture_gate(
+    engine: OrchestrationEngine,
+    decision_repo: DecisionRepository,
+    run_id: str,
+    actor_role_capacity: str,
+    rationale: str,
+) -> None:
+    decision_repo.create(
+        Decision(
+            decision_id=new_id(),
+            run_id=run_id,
+            decision_type="approval",
+            actor_role_capacity=actor_role_capacity,
+            rationale=rationale,
+            created_at=utcnow(),
+        )
+    )
+    engine.transition(run_id, to_stage="N9", status="running", action="architecture_approved", actor_type="human")
+
+
+def reject_architecture_gate(
+    engine: OrchestrationEngine,
+    decision_repo: DecisionRepository,
+    run_id: str,
+    actor_role_capacity: str,
+    rationale: str,
+) -> None:
+    decision_repo.create(
+        Decision(
+            decision_id=new_id(),
+            run_id=run_id,
+            decision_type="rejection",
+            actor_role_capacity=actor_role_capacity,
+            rationale=rationale,
+            created_at=utcnow(),
+        )
+    )
+    engine.transition(run_id, to_stage="N7", status="running", action="architecture_rejected", actor_type="human")
+
+
 def check_gate_timeout(
     engine: OrchestrationEngine,
     run_id: str,
