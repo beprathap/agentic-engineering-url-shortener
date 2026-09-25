@@ -10,6 +10,7 @@ from src.orchestration.clock import Clock, SystemClock
 from src.persistence.orchestration_store import (
     AuditEvent,
     AuditEventRepository,
+    DecisionRepository,
     WorkflowInstance,
     WorkflowInstanceRepository,
     new_id,
@@ -50,6 +51,50 @@ def retry_with_backoff(
 def enter_safe_stop(engine: "OrchestrationEngine", run_id: str, reason: str) -> None:
     """Free-function form of engine.safe_stop, for call sites that don't hold an engine reference."""
     engine.safe_stop(run_id, reason)
+
+
+class IrreversibleActionNotApproved(RuntimeError):
+    """Raised when an irreversible/destructive action is attempted with no
+    preceding recorded approval Decision for the run (NFR-011)."""
+
+
+_APPROVAL_DECISION_TYPES = ("approval", "exception_approval")
+
+
+def require_prior_approval(decision_repo: DecisionRepository, run_id: str) -> None:
+    """Guard: raise unless at least one approval/exception_approval Decision
+    already exists for this run. Call this immediately before any node
+    performs an irreversible action (Constitution Principle III, NFR-011).
+    """
+    decisions = decision_repo.list_for_run(run_id)
+    if not any(d.decision_type in _APPROVAL_DECISION_TYPES for d in decisions):
+        raise IrreversibleActionNotApproved(
+            f"run {run_id} has no recorded approval; refusing irreversible action"
+        )
+
+
+def classify_and_execute(
+    fn: Callable[[], T],
+    clock: Clock,
+    permanent_exception_types: tuple[type[Exception], ...],
+    max_attempts: int = 3,
+    base_backoff_ms: int = 200,
+) -> T:
+    """Failure-classification dispatch (NFR-002): a permanent-exception-type failure
+    is never retried and is re-raised immediately; anything else is treated as
+    transient and goes through the bounded retry/backoff path.
+    """
+    try:
+        return fn()
+    except permanent_exception_types:
+        raise
+    except Exception:
+        def retryable_fn() -> T:
+            try:
+                return fn()
+            except permanent_exception_types:
+                raise
+        return retry_with_backoff(retryable_fn, clock=clock, max_attempts=max_attempts - 1, base_backoff_ms=base_backoff_ms)
 
 
 class OrchestrationEngine:
