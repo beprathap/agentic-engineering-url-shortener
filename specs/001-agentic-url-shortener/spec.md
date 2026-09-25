@@ -28,6 +28,10 @@ These decisions are treated as confirmed requirements below, not assumptions.
 - Q: How long must audit evidence be retained after a workflow completes? → A: Indefinite for this prototype (no automatic purge for the life of the demonstration); documented as a production limitation that a real system would need a compliance-grade retention policy.
 - Q: What alphabet and length should generated short codes use? → A: Base62 (0-9, a-z, A-Z), 7 characters (~3.5 trillion combinations).
 
+### Session 2026-09-24 (Approvals Round 2 — Proposed Validation Targets)
+
+- Q: Approve PVT-001 (default link expiration = 90 days), PVT-002 (redirect-path throughput ≥ 50 req/s), PVT-003 (redirect-path latency ≤ 100ms at PVT-002 scale), PVT-004 (bounded retry default = 3 attempts, exponential backoff from 200ms), and resolve AMB-006 (analytics retention after link expiry)? → A: Approve all five as proposed. PVT-001..004 are now confirmed requirements (moved to Confirmed Parameters). AMB-006 is resolved: analytics data is retained indefinitely alongside the expired `ShortLink` record, same posture as audit retention (NFR-006).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Greenfield Requirement Flows Straight Through Governed Orchestration (Priority: P1)
@@ -203,7 +207,7 @@ While a workflow is in flight, an upstream artifact it depends on changes materi
 - **FR-SVC-003**: System MUST guarantee short-code uniqueness (7-character Base62) among currently active (non-expired, non-deleted) links, and MUST resolve generation collisions automatically without exposing the collision to the caller as an error.
 - **FR-SVC-004**: System MUST resolve a valid, active short code to its target URL via redirect.
 - **FR-SVC-005**: System MUST distinguish, in its response, between "short code not found" and "short code expired" outcomes for redirect requests.
-- **FR-SVC-006**: System MUST support an optional expiration setting at creation time; if omitted, a default expiration policy (see NFR/Assumptions) applies.
+- **FR-SVC-006**: System MUST support an optional expiration setting at creation time; if omitted, the confirmed default expiration policy of 90 days from creation applies (PVT-001, confirmed 2026-09-24).
 - **FR-SVC-007**: System MUST capture basic redirect analytics (at minimum: redirect count and last-accessed timestamp) per short code.
 - **FR-SVC-008**: System MUST treat identical creation requests submitted with the same client-supplied idempotency key as a single logical operation, returning the original result rather than creating a duplicate.
 - **FR-SVC-009**: System MUST handle concurrent creation and redirect requests for the same short code without producing inconsistent analytics counts or duplicate active codes.
@@ -262,7 +266,7 @@ While a workflow is in flight, an upstream artifact it depends on changes materi
 
 ## Assumptions
 
-- **AS-001**: Default link expiration, when not specified by the caller, is 90 days from creation. *(Proposed validation target — see PVT-001; requires approval.)*
+- **AS-001**: Default link expiration, when not specified by the caller, is 90 days from creation. *(Confirmed 2026-09-24 — see PVT-001 in Confirmed Parameters.)*
 - **AS-002**: "Production-oriented prototype" means locally runnable, single-node, without requiring managed cloud infrastructure — consistent with D-003.
 - **AS-003**: The assessment is evaluated by inspecting the repository, its artifacts, and its evidence trail, not by operating a live, internet-exposed deployment.
 - **AS-004**: Basic redirect analytics (count + last-accessed) are sufficient for v1; richer analytics (referrer, geo, device) are out of scope unless a future requirement adds them (see EXC-002).
@@ -277,9 +281,7 @@ While a workflow is in flight, an upstream artifact it depends on changes materi
 
 ## Ambiguities Deferred to `/speckit-clarify`
 
-AMB-001 through AMB-005 were resolved in the Clarifications session on 2026-09-24 (see above) and their resolutions are now reflected as confirmed requirements/parameters throughout this spec. One item remains open as detail-level and low-impact, deferred to plan-time or a future clarification pass:
-
-- **AMB-006**: Whether analytics data is retained after a short link expires, and for how long — owner: human. *(Deferred: low impact — does not block architecture or task decomposition; a reasonable default of "retain analytics indefinitely alongside the expired ShortLink record" may be applied at plan time subject to human confirmation.)*
+AMB-001 through AMB-006 were all resolved in the Clarifications sessions on 2026-09-24 (see above) and their resolutions are now reflected as confirmed requirements/parameters throughout this spec. No ambiguities remain open.
 
 ## Exclusions
 
@@ -294,11 +296,11 @@ AMB-001 through AMB-005 were resolved in the Clarifications session on 2026-09-2
 
 - **NFR-001 (Security)**: All external input to both the URL-shortener API and the orchestration ingestion interface MUST be validated and normalized before use; disallowed URL schemes MUST be rejected (Constitution Principle V).
 - **NFR-002 (Reliability)**: Every orchestration stage MUST have an explicitly classified failure mode (transient/permanent) and a defined response (retry/fallback/rollback/compensation/safe-stop) — no stage may have undefined failure behavior (Constitution Principle VIII).
-- **NFR-003 (Scalability — proposed validation target)**: *(PVT-002, requires approval)* The URL-shortener redirect path should sustain at least 50 requests/second on a single local node without observable error-rate increase, as a demonstration-scale target — not a claimed production capacity figure.
+- **NFR-003 (Scalability)**: The URL-shortener redirect path MUST sustain at least 50 requests/second on a single local node without observable error-rate increase (PVT-002, confirmed 2026-09-24), as a demonstration-scale target — not a claimed production capacity figure.
 - **NFR-004 (Maintainability)**: Domain logic, API delivery, persistence, orchestration, policy enforcement, and telemetry MUST be separable such that any one can be tested in isolation (Constitution Principle VII).
 - **NFR-005 (Observability)**: Every orchestration run MUST be assignable a correlation/run identifier traceable through all logs, state records, and evidence produced during that run (Constitution Principle IX).
 - **NFR-006 (Auditability)**: Audit evidence MUST be retrievable after the fact without relying on the orchestration process still being in memory (i.e., must be persisted, not only logged to console) (Constitution Principle IX). Retention for this prototype is indefinite (no automatic purge for the life of the demonstration); a production deployment would require a defined compliance-grade retention policy, which is explicitly out of scope here (per Clarifications 2026-09-24).
-- **NFR-007 (Performance — proposed validation target)**: *(PVT-003, requires approval)* Redirect resolution should complete, end-to-end, within 100ms at the demonstration scale in NFR-003 — a proposed, not confirmed, target.
+- **NFR-007 (Performance)**: Redirect resolution MUST complete, end-to-end, within 100ms at the demonstration scale in NFR-003 (PVT-003, confirmed 2026-09-24).
 - **NFR-008 (Recoverability)**: A workflow instance MUST be resumable from persisted state after an orchestration process restart without manual data repair (Constitution Principle VIII).
 - **NFR-009 (Testability)**: Every functional requirement in this specification MUST map to at least one automated test asserting its acceptance criteria (Constitution Principle IV, XI).
 - **NFR-010 (Change Safety)**: A change to an approved requirement, architecture decision, schema, or policy MUST trigger a recorded impact analysis before it is allowed to affect an in-flight or future workflow (Constitution Principle I, VI).
@@ -311,12 +313,12 @@ AMB-001 through AMB-005 were resolved in the Clarifications session on 2026-09-2
 - Human-gate approval timeout: 24 hours, after which the workflow transitions to escalation/safe-stop (previously PVT-005; now confirmed, not proposed).
 - Audit evidence retention: indefinite for this prototype; no automatic purge.
 - Rate limiting: not implemented in v1; documented limitation (EXC-006).
+- **PVT-001** (confirmed): Default link expiration = 90 days (supports AS-001, FR-SVC-006).
+- **PVT-002** (confirmed): Redirect-path throughput ≥ 50 req/s on a single local node (supports NFR-003).
+- **PVT-003** (confirmed): Redirect-path latency ≤ 100ms at PVT-002 scale (supports NFR-007).
+- **PVT-004** (confirmed): Bounded retry policy default = 3 attempts with exponential backoff starting at 200ms, for transient orchestration-stage failures (supports FR-ORC-007).
+- **AMB-006** (resolved): Analytics data is retained indefinitely alongside the expired `ShortLink` record — same posture as audit retention (NFR-006).
 
 ## Proposed Validation Targets (Require Human Approval)
 
-These remain proposed, not confirmed, since the assignment provided no numeric targets and they were not covered by the clarification session above:
-
-- **PVT-001**: Default link expiration = 90 days (supports AS-001).
-- **PVT-002**: Redirect-path throughput ≥ 50 req/s on a single local node (supports NFR-003).
-- **PVT-003**: Redirect-path latency ≤ 100ms at PVT-002 scale (supports NFR-007).
-- **PVT-004**: Bounded retry policy default = 3 attempts with exponential backoff starting at 200ms, for transient orchestration-stage failures.
+None outstanding — all previously proposed targets (PVT-001..004) were approved 2026-09-24 and moved to Confirmed Parameters above.
