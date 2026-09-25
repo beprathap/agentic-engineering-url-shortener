@@ -18,6 +18,16 @@ These three decisions were made explicitly by the human owner (not defaulted by 
 
 These decisions are treated as confirmed requirements below, not assumptions.
 
+## Clarifications
+
+### Session 2026-09-24
+
+- Q: When someone submits a URL that's already been shortened before, should the system return the same short code that already exists for it, or always mint a brand-new short code? → A: Always create a new short code, even for a previously-seen target URL (no de-duplication).
+- Q: Is rate limiting a hard requirement this prototype must actually implement and test, or is it a documented-but-unenforced proposed target for v1? → A: Document rate-limiting as a proposed, unimplemented target for v1; treated as a known limitation, not a v1 functional requirement.
+- Q: How long should a workflow wait for a human response at a mandatory approval gate before treating it as timed-out and moving to escalation/safe-stop? → A: 24 hours.
+- Q: How long must audit evidence be retained after a workflow completes? → A: Indefinite for this prototype (no automatic purge for the life of the demonstration); documented as a production limitation that a real system would need a compliance-grade retention policy.
+- Q: What alphabet and length should generated short codes use? → A: Base62 (0-9, a-z, A-Z), 7 characters (~3.5 trillion combinations).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Greenfield Requirement Flows Straight Through Governed Orchestration (Priority: P1)
@@ -85,7 +95,7 @@ The human operator, acting in the reviewer/approver capacity (per D-002), inspec
 
 **Acceptance Scenarios**:
 
-1. **Given** a workflow instance has reached a mandatory human gate, **When** no human action has been taken, **Then** the workflow MUST remain in a pending state indefinitely (bounded only by an explicitly defined timeout/escalation policy) and MUST NOT auto-advance.
+1. **Given** a workflow instance has reached a mandatory human gate, **When** no human action has been taken, **Then** the workflow MUST remain in a pending state until the confirmed 24-hour timeout (see Confirmed Parameters) elapses, at which point it transitions to escalation/safe-stop; it MUST NOT auto-advance to approval.
 2. **Given** a human explicitly approves a gate, **When** the approval is recorded, **Then** it MUST capture the approving identity/role-capacity, timestamp, and any conditions attached, and the workflow MUST advance to the next stage.
 3. **Given** a human explicitly rejects a gate, **When** the rejection is recorded, **Then** the workflow MUST transition to a defined rejection-handling state (e.g., return to the producing stage with the rejection reason) rather than an undefined or destructive state.
 
@@ -181,14 +191,16 @@ While a workflow is in flight, an upstream artifact it depends on changes materi
 - What happens when a policy exception expires without renewal? Any release-readiness evaluation performed after expiry MUST treat the check as unapproved/FAIL again.
 - What happens when two orchestration stages that could run in parallel both write to shared state? System MUST synchronize them such that the resulting state is consistent and attributable.
 - What happens when a workflow is asked to resume after a non-recoverable failure (e.g., corrupted state record)? System MUST refuse silent resumption and MUST surface the condition for human decision.
+- What happens when a client submits a target URL that has already been shortened by a prior request? System MUST mint and return a new, distinct short code; it MUST NOT de-duplicate against the earlier short code (per Clarifications 2026-09-24).
+- What happens when a client sends abusively high-frequency requests? Rate limiting is not implemented in v1 (per Clarifications 2026-09-24 and EXC-006); this is a documented limitation, not a defect.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements — URL Shortener Domain
 
-- **FR-SVC-001**: System MUST accept a request to create a short link for a syntactically valid, allowed-scheme URL and return a unique short code.
+- **FR-SVC-001**: System MUST accept a request to create a short link for a syntactically valid, allowed-scheme URL and return a unique, newly-generated Base62 short code of 7 characters; it MUST NOT return a pre-existing short code for a previously-seen target URL (no de-duplication, per Clarifications 2026-09-24).
 - **FR-SVC-002**: System MUST reject URL creation requests for disallowed schemes (e.g., `javascript:`, `data:`) or malformed URLs, returning a distinct, non-ambiguous rejection outcome.
-- **FR-SVC-003**: System MUST guarantee short-code uniqueness among currently active (non-expired, non-deleted) links, and MUST resolve generation collisions automatically without exposing the collision to the caller as an error.
+- **FR-SVC-003**: System MUST guarantee short-code uniqueness (7-character Base62) among currently active (non-expired, non-deleted) links, and MUST resolve generation collisions automatically without exposing the collision to the caller as an error.
 - **FR-SVC-004**: System MUST resolve a valid, active short code to its target URL via redirect.
 - **FR-SVC-005**: System MUST distinguish, in its response, between "short code not found" and "short code expired" outcomes for redirect requests.
 - **FR-SVC-006**: System MUST support an optional expiration setting at creation time; if omitted, a default expiration policy (see NFR/Assumptions) applies.
@@ -224,7 +236,7 @@ While a workflow is in flight, an upstream artifact it depends on changes materi
 
 ### Key Entities
 
-- **ShortLink**: A short code mapped to a target URL. Attributes: short code, target URL, creation timestamp, optional expiration timestamp, status (active/expired/deleted), idempotency key (if supplied).
+- **ShortLink**: A short code mapped to a target URL. Attributes: short code (7-character Base62, unique among active links), target URL, creation timestamp, optional expiration timestamp, status (active/expired/deleted), idempotency key (if supplied). No uniqueness constraint on target URL — the same URL may back multiple distinct short codes.
 - **RedirectEvent**: A single resolution of a short code. Attributes: short code reference, timestamp, outcome (redirected/not-found/expired).
 - **WorkflowInstance**: A single execution of the governed orchestration for one requirement. Attributes: run identifier, current stage, status, originating requirement reference, creation timestamp, last-updated timestamp.
 - **Requirement**: A normalized unit of requested work ingested by the orchestration. Attributes: stable identifier, raw input, normalized description, requirement-quality check results, classification (greenfield/brownfield/ambiguous).
@@ -265,14 +277,9 @@ While a workflow is in flight, an upstream artifact it depends on changes materi
 
 ## Ambiguities Deferred to `/speckit-clarify`
 
-The following items are recorded for the dedicated clarification pass (Constitution/doc Prompt 3) rather than resolved here, because they are detail-level rather than scope-defining:
+AMB-001 through AMB-005 were resolved in the Clarifications session on 2026-09-24 (see above) and their resolutions are now reflected as confirmed requirements/parameters throughout this spec. One item remains open as detail-level and low-impact, deferred to plan-time or a future clarification pass:
 
-- **AMB-001**: Exact short-code alphabet and length (affects collision probability and URL length) — owner: human; required before FR-SVC-003 can be made fully testable.
-- **AMB-002**: Precise duplicate-URL semantics — does submitting the same target URL twice always return a new short code, or is de-duplication expected? — owner: human.
-- **AMB-003**: Whether rate limiting is a hard v1 requirement or a proposed-but-unconfirmed non-functional target — owner: human; see PVT items below.
-- **AMB-004**: Exact human-approval timeout duration for each gate type before escalation/safe-stop triggers — owner: human.
-- **AMB-005**: Audit-evidence retention period — owner: human; interacts with Constitution Principle IX and VI (compliance/audit retention policy).
-- **AMB-006**: Whether analytics data is retained after a short link expires, and for how long — owner: human.
+- **AMB-006**: Whether analytics data is retained after a short link expires, and for how long — owner: human. *(Deferred: low impact — does not block architecture or task decomposition; a reasonable default of "retain analytics indefinitely alongside the expired ShortLink record" may be applied at plan time subject to human confirmation.)*
 
 ## Exclusions
 
@@ -281,6 +288,7 @@ The following items are recorded for the dedicated clarification pass (Constitut
 - **EXC-003**: A user-facing web UI for link management is out of scope; the demonstration operates at the API and orchestration-evidence level.
 - **EXC-004**: Multi-region or high-availability deployment topology is out of scope; single-node local execution is the target per D-003/AS-002.
 - **EXC-005**: Enforced separation-of-duties between distinct human identities is out of scope, per D-002.
+- **EXC-006**: Rate limiting is not implemented or enforced in v1; it is documented as a known, disclosed limitation rather than a v1 functional requirement (per Clarifications 2026-09-24).
 
 ## Non-Functional Requirements
 
@@ -289,19 +297,26 @@ The following items are recorded for the dedicated clarification pass (Constitut
 - **NFR-003 (Scalability — proposed validation target)**: *(PVT-002, requires approval)* The URL-shortener redirect path should sustain at least 50 requests/second on a single local node without observable error-rate increase, as a demonstration-scale target — not a claimed production capacity figure.
 - **NFR-004 (Maintainability)**: Domain logic, API delivery, persistence, orchestration, policy enforcement, and telemetry MUST be separable such that any one can be tested in isolation (Constitution Principle VII).
 - **NFR-005 (Observability)**: Every orchestration run MUST be assignable a correlation/run identifier traceable through all logs, state records, and evidence produced during that run (Constitution Principle IX).
-- **NFR-006 (Auditability)**: Audit evidence MUST be retrievable after the fact without relying on the orchestration process still being in memory (i.e., must be persisted, not only logged to console) (Constitution Principle IX).
+- **NFR-006 (Auditability)**: Audit evidence MUST be retrievable after the fact without relying on the orchestration process still being in memory (i.e., must be persisted, not only logged to console) (Constitution Principle IX). Retention for this prototype is indefinite (no automatic purge for the life of the demonstration); a production deployment would require a defined compliance-grade retention policy, which is explicitly out of scope here (per Clarifications 2026-09-24).
 - **NFR-007 (Performance — proposed validation target)**: *(PVT-003, requires approval)* Redirect resolution should complete, end-to-end, within 100ms at the demonstration scale in NFR-003 — a proposed, not confirmed, target.
 - **NFR-008 (Recoverability)**: A workflow instance MUST be resumable from persisted state after an orchestration process restart without manual data repair (Constitution Principle VIII).
 - **NFR-009 (Testability)**: Every functional requirement in this specification MUST map to at least one automated test asserting its acceptance criteria (Constitution Principle IV, XI).
 - **NFR-010 (Change Safety)**: A change to an approved requirement, architecture decision, schema, or policy MUST trigger a recorded impact analysis before it is allowed to affect an in-flight or future workflow (Constitution Principle I, VI).
 - **NFR-011 (Controlled Autonomy)**: No orchestration stage may perform a destructive or irreversible action (e.g., permanent data deletion, force-push equivalent) without a preceding recorded human approval (Constitution Principle III).
 
+## Confirmed Parameters (Resolved via Clarification, 2026-09-24)
+
+- Short-code format: Base62 (0-9, a-z, A-Z), 7 characters.
+- Duplicate target URL handling: always mint a new short code; no de-duplication.
+- Human-gate approval timeout: 24 hours, after which the workflow transitions to escalation/safe-stop (previously PVT-005; now confirmed, not proposed).
+- Audit evidence retention: indefinite for this prototype; no automatic purge.
+- Rate limiting: not implemented in v1; documented limitation (EXC-006).
+
 ## Proposed Validation Targets (Require Human Approval)
 
-These are proposed, not confirmed, since the assignment provided no numeric targets:
+These remain proposed, not confirmed, since the assignment provided no numeric targets and they were not covered by the clarification session above:
 
 - **PVT-001**: Default link expiration = 90 days (supports AS-001).
 - **PVT-002**: Redirect-path throughput ≥ 50 req/s on a single local node (supports NFR-003).
 - **PVT-003**: Redirect-path latency ≤ 100ms at PVT-002 scale (supports NFR-007).
 - **PVT-004**: Bounded retry policy default = 3 attempts with exponential backoff starting at 200ms, for transient orchestration-stage failures.
-- **PVT-005**: Human-gate response timeout before escalation = 24 hours (interacts with AMB-004; proposed default pending human confirmation during clarification).
