@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Callable, TypeVar
 
 from src.orchestration.clock import Clock, SystemClock
+from src.telemetry.logging import get_logger, log_event
 from src.persistence.orchestration_store import (
     AuditEvent,
     AuditEventRepository,
@@ -108,6 +109,7 @@ class OrchestrationEngine:
     def __init__(self, workflow_repo: WorkflowInstanceRepository, audit_repo: AuditEventRepository):
         self._workflow_repo = workflow_repo
         self._audit_repo = audit_repo
+        self._logger = get_logger("orchestration")
 
     def create_workflow(self, requirement_id: str, initial_stage: str) -> WorkflowInstance:
         now = utcnow()
@@ -156,3 +158,4 @@ class OrchestrationEngine:
             reason=reason,
         )
         self._audit_repo.append(event)
+        log_event(self._logger, run_id=run_id, action=action, message=reason or "")
