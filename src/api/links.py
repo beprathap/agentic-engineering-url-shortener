@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime
 
 from fastapi import APIRouter, Header
@@ -41,48 +42,58 @@ class ShortLinkDetailResponse(ShortLinkResponse):
 def register_links_routes(router: APIRouter, repo: ShortLinkRepository) -> None:
     @router.post("/v1/links", status_code=201, response_model=None, responses={400: {"model": ErrorResponse}})
     def create_short_link(payload: CreateShortLinkRequest, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
-        if idempotency_key is not None:
-            existing = repo.find_by_idempotency_key(idempotency_key)
-            if existing is not None:
-                return ShortLinkResponse(
-                    short_code=existing.short_code,
-                    target_url=existing.target_url,
-                    created_at=existing.created_at.isoformat(),
-                    expires_at=existing.expires_at.isoformat() if existing.expires_at else None,
-                    status=existing.status,
+        try:
+            if idempotency_key is not None:
+                existing = repo.find_by_idempotency_key(idempotency_key)
+                if existing is not None:
+                    return ShortLinkResponse(
+                        short_code=existing.short_code,
+                        target_url=existing.target_url,
+                        created_at=existing.created_at.isoformat(),
+                        expires_at=existing.expires_at.isoformat() if existing.expires_at else None,
+                        status=existing.status,
+                    )
+
+            try:
+                validate_url(payload.target_url)
+            except InvalidUrlError as exc:
+                return JSONResponse(
+                    status_code=400,
+                    content=ErrorResponse(error_code="INVALID_URL", message=str(exc)).model_dump(),
                 )
 
-        try:
-            validate_url(payload.target_url)
-        except InvalidUrlError as exc:
-            return JSONResponse(
-                status_code=400,
-                content=ErrorResponse(error_code="INVALID_URL", message=str(exc)).model_dump(),
+            code = generate_unique_short_code(repo.is_active_code_taken)
+            created_at = utcnow()
+            if payload.expires_at is not None:
+                expires_at = datetime.fromisoformat(payload.expires_at)
+            else:
+                expires_at = compute_default_expiration(created_at)
+            link = ShortLink(
+                short_code=code,
+                target_url=payload.target_url,
+                created_at=created_at,
+                expires_at=expires_at,
+                status="active",
+                idempotency_key=idempotency_key,
             )
+            repo.create(link)
 
-        code = generate_unique_short_code(repo.is_active_code_taken)
-        created_at = utcnow()
-        if payload.expires_at is not None:
-            expires_at = datetime.fromisoformat(payload.expires_at)
-        else:
-            expires_at = compute_default_expiration(created_at)
-        link = ShortLink(
-            short_code=code,
-            target_url=payload.target_url,
-            created_at=created_at,
-            expires_at=expires_at,
-            status="active",
-            idempotency_key=idempotency_key,
-        )
-        repo.create(link)
-
-        return ShortLinkResponse(
-            short_code=link.short_code,
-            target_url=link.target_url,
-            created_at=link.created_at.isoformat(),
-            expires_at=link.expires_at.isoformat() if link.expires_at else None,
-            status=link.status,
-        )
+            return ShortLinkResponse(
+                short_code=link.short_code,
+                target_url=link.target_url,
+                created_at=link.created_at.isoformat(),
+                expires_at=link.expires_at.isoformat() if link.expires_at else None,
+                status=link.status,
+            )
+        except sqlite3.Error:
+            # FR-SVC-010: fail safely, no internal implementation detail in the response.
+            return JSONResponse(
+                status_code=503,
+                content=ErrorResponse(
+                    error_code="STORE_UNAVAILABLE",
+                    message="Unable to persist the short link at this time.",
+                ).model_dump(),
+            )
 
     @router.get("/v1/links/{short_code}", response_model=None, responses={404: {"model": ErrorResponse}})
     def get_short_link_detail(short_code: str):
