@@ -4,7 +4,7 @@
 Accepted (Human Gate 4, 2026-09-24)
 
 ## Context
-The spec requires an explicit, versioned API contract with executable contract validation (Plan §2), and CON-001 defers technology choice to this planning stage. A language and API-delivery framework must be selected that supports rapid, contract-accurate development within the 2–3 day timebox.
+The spec requires an explicit, versioned API contract with executable contract validation, and the project constitution defers technology choice to this planning stage. A language and API-delivery framework must be selected that supports rapid, contract-accurate development within the 2–3 day timebox.
 
 ## Decision Drivers
 - Contract-from-code generation to avoid a second, driftable source of truth (Constitution Principle X).
@@ -58,7 +58,7 @@ FastAPI's contract-from-code generation directly satisfies the spec's explicit, 
 Low-moderate. A language/framework change is a full rewrite of `src/api/` and touches most of the codebase, though `contracts/` (language-agnostic) would survive unchanged.
 
 ## Traceability
-- Requirements: CON-001, Plan §2 (API/schema deliverables), NFR-004.
+- Requirements: CON-001, API/schema deliverables, NFR-004.
 - Spec sections: Constraints, Non-Functional Requirements.
 - Plan sections: Technical Context, Technology Decisions #1-2.
 - Expected task identifiers: Delivery Sequence slice 2 (Walking skeleton).

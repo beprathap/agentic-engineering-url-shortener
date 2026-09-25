@@ -1,6 +1,6 @@
 # Final Engineering Summary
 
-*(doc §25 — the mandatory 21-section schema. Every material claim below cites an exact repository path, related requirement/scenario identifier, validation command where applicable, and expected or actual observable result. Confirmed requirements, approved assumptions, demonstration measurements, and residual limitations are kept distinct throughout — none are blended.)*
+Every material claim below cites an exact repository path, related requirement or scenario identifier, validation command where applicable, and expected or actual observable result. Confirmed requirements, approved assumptions, demonstration measurements, and residual limitations are kept distinct throughout — none are blended.
 
 ## 1. Executive Engineering Outcome and Release-Readiness Status
 
@@ -48,7 +48,7 @@ Gates: N5 (requirements), N8 (architecture), N13 (release-readiness), N4 (clarif
 
 ## 10. Security Controls, Findings, and Residual Risks
 
-**Controls**: URL scheme allowlist + SSRF-adjacent loopback/private-address rejection (`src/domain/validation.py`, `tests/unit/test_validation.py`); no authentication anywhere in v1 (D-001, deliberate); automated `pip-audit` (§8 above) — real invocation confirmed no known vulnerabilities as of 2026-09-25.
+**Controls**: URL scheme allowlist + SSRF-adjacent loopback/private-address rejection (`src/domain/validation.py`, `tests/unit/test_validation.py`); no authentication anywhere in v1 (D-001, deliberate); automated `pip-audit` — real invocation confirmed no known vulnerabilities as of 2026-09-25.
 **Findings during development**: none unresolved.
 **Residual risks**: no rate limiting (EXC-006, disclosed); no auth means the security surface is narrower than a production system's would need (disclosed, D-001).
 
@@ -87,9 +87,9 @@ Full matrix: `docs/assessment/convergence-report.md` §"Requirement Traceability
 ## 19. Known Limitations, Technical Debt, and Deferred Enhancements
 
 1. HTTP API wires only N1/inspection/audit; full N2–N14 pipeline is exercised via Python-level integration tests, not HTTP (`quickstart.md` §Implementation Scope Note).
-2. Brownfield scenario demo-authenticity (`plan.md` §Known Limitations).
-3. Minimal parallel-execution demonstration — one join point (`plan.md` §Known Limitations, reiterated in `docs/assessment/final-independent-assessment.md`).
-4. Greenfield auto-qualified-approval rubber-stamp risk if automated carelessly (`plan.md` §Known Limitations).
+2. Brownfield scenario demo-authenticity (see the project plan's known limitations).
+3. Minimal parallel-execution demonstration — one join point (see the project plan's known limitations and the independent assessment).
+4. Greenfield auto-qualified-approval rubber-stamp risk if automated carelessly (see the project plan's known limitations).
 5. Classification heuristics (N3, N4b, replanning) are rule-based/keyword-based, disclosed as such in each module's docstring, not NLP or semantic analysis.
 6. No rate limiting (EXC-006).
 
@@ -105,7 +105,7 @@ Deferred enhancements (all optional, non-blocking, per `docs/assessment/final-in
 - Inspect scenario evidence: `docs/scenarios/`.
 - Inspect convergence/assessment: `docs/assessment/`.
 
-A full Reviewer Navigation Guide (doc §26) is the next deliverable after this summary.
+A full Reviewer Navigation Guide is the next supporting deliverable after this summary.
 
 ## 21. Final Engineering Judgment, Unresolved Blockers, and Recommended Next Actions
 
@@ -113,4 +113,4 @@ A full Reviewer Navigation Guide (doc §26) is the next deliverable after this s
 
 **Unresolved blockers**: none.
 
-**Recommended next actions**: (1) produce the Reviewer Navigation Guide (doc §26); (2) verify setup from a clean clone; (3) tag the final commit as `assessment-submission-v1.0` (doc §27–28).
+**Recommended next actions**: (1) produce the Reviewer Navigation Guide; (2) verify setup from a clean clone; (3) tag the final commit as `assessment-submission-v1.0`.

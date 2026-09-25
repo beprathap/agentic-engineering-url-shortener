@@ -41,7 +41,7 @@ This is the only option that satisfies FR-ORC-012's system-detection requirement
 - **Governance**: Replanned work is indistinguishable, from a governance standpoint, from originally-planned work — it must pass N8 again, with no bypass.
 
 ## Risks and Mitigations
-- Risk: material/cosmetic classification is itself a judgment call that could be gamed to avoid re-approval. Mitigation: the classification is made by the system based on a diff of specific tracked fields (e.g., API contract shape, schema fields), not a free-text judgment, for the fields that matter most (Plan §2's "every API or schema change must identify... version impact").
+- Risk: material/cosmetic classification is itself a judgment call that could be gamed to avoid re-approval. Mitigation: the classification is made by the system based on a diff of specific tracked fields (e.g., API contract shape, schema fields), not a free-text judgment, for the fields that matter most in the API and schema change review process.
 
 ## Reversibility
 Moderate. Isolated to `src/orchestration/replanning.py` and the artifact-versioning scheme; does not require changing the core executor (ADR-005).

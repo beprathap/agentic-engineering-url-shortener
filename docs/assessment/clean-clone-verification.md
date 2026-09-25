@@ -1,7 +1,5 @@
 # Clean-Clone Verification
 
-*(doc §27, step 61 — "Verify setup from a clean clone")*
-
 **Performed**: 2026-09-25, immediately before tagging the final submission.
 
 ```bash

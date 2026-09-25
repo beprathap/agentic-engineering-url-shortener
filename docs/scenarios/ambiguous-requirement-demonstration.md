@@ -1,6 +1,6 @@
 # Ambiguous Requirement Demonstration
 
-*(doc §20 — the 17-item required evidence, from a live execution of the implemented system, run ID redacted per-run since `/tmp` scratch DBs are not retained; reproducible via the command at the bottom)*
+The run ID is intentionally redacted because the scratch database is not retained, but the evidence below is taken from a live execution of the implemented system and is reproducible via the command at the bottom.
 
 1. **Original ambiguous input**: `"Make links expire eventually."`
 2. **Detected ambiguity**: N3's quality checks flagged `testability: contains a vague/unquantified marker with no concrete criterion` (the word "eventually" matches a known vagueness marker with no duration attached).

@@ -7,7 +7,7 @@ Accepted (Human Gate 4, 2026-09-24)
 Constitution Principle IV mandates red-green-refactor TDD across domain and orchestration behavior with unit, integration, API contract, orchestration-transition, reliability, security, and end-to-end coverage; task completion requires executed, passing validation, not merely generated code.
 
 ## Decision Drivers
-- Must produce genuinely executable contract validation (Plan §2), not just a static document.
+- Must produce genuinely executable contract validation, not just a static document.
 - Must minimize added dependencies (CON-002 spirit — keep the footprint small even though CON-002 is about infrastructure, not libraries, low dependency count reduces review burden).
 - Must support the full breadth of test categories the constitution requires.
 

@@ -1,6 +1,6 @@
 # Task-Group Checkpoint & Pre-Commit Review Backfill
 
-**Purpose**: The guidance doc (§16–17) specifies running a Task-Group Checkpoint after every implementation group and a Pre-Commit Review before every commit. During implementation these were applied *in substance* — every commit message states requirements addressed, ADRs followed, tests-first evidence, and validation actually executed — but not emitted as separate standalone documents per group. This backfill consolidates that evidence against the doc's checkpoint criteria, retrospectively, for reviewer verification. No new implementation work occurs here; this is evidence packaging.
+**Purpose**: This backfill compiles the task-group checkpoint and pre-commit review evidence after the fact so reviewers can see the implementation history, the requirements addressed, the ADRs followed, the tests-first evidence, and the validation actually executed. No new implementation work occurs here; this is evidence packaging.
 
 **Verification performed for this backfill**: `pytest -q` re-run against the current `HEAD` (commit `7430749`) immediately before writing this document — **86 passed, 0 failed** (see below). This is real, executed output, not a claim.
 
@@ -10,7 +10,7 @@
 
 | # | Commit | Task Group | Requirements / Gate |
 |---|---|---|---|
-| 1 | `820f358` | Repo scaffold, SpecKit init | Doc §3 (Repository Setup) |
+| 1 | `820f358` | Repo scaffold, SpecKit init | Repository setup |
 | 2 | `01692dd` | Constitution v1.0.0 | Human Gate 1 |
 | 3 | `a2c2302` | Feature specification | Human Gate 2 |
 | 4 | `84e359b` | Clarification (5 Q&A) | Human Gate 3 |
@@ -45,7 +45,7 @@ FR-SVC-007/009. **Real bug found**: `sqlite3.InterfaceError` under genuine concu
 FR-SVC-010/012, D-001, ADR-013. Validation: 30 passed.
 
 ### 17. `bbfb26d` — Orchestration repositories + schema fix (T032–T033)
-FR-ORC-014, ADR-010. **Contract change flagged before applying**: `audit-event.schema.json` had a real validation gap (`reason: null` passed where a non-empty reason was required); per doc §15's "stop before changing a versioned... audit contract" rule, this was surfaced and approved in-session before editing, not silently patched. Validation: 32 passed.
+FR-ORC-014, ADR-010. **Contract change flagged before applying**: `audit-event.schema.json` had a real validation gap (`reason: null` passed where a non-empty reason was required); this was surfaced and approved in-session before editing, not silently patched. Validation: 32 passed.
 
 ### 18. `0415537` — DAG, clock, retry/safe-stop (T034–T042)
 FR-ORC-001/007/010, CON-003, ADR-005/006/007. This is the Section 14 reviewer-gate correction (clock abstraction) plus analyze-finding F1's fix (retry/safe-stop relocated to Foundational). Validation: 37 passed.

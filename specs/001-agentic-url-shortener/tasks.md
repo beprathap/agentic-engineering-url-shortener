@@ -263,7 +263,7 @@ Single project per `plan.md` Project Structure: `src/`, `tests/` at repository r
 
 ### Tests for User Story 8
 
-- [x] T105 [P] [US8] Integration test *(strengthened per Section 14 Independent Reviewer Gate, 2026-09-24)*: resumption is proven via an actual OS-level process kill and restart of the orchestration process (not an in-process function call simulating one), asserting it resumes from persisted `WorkflowInstance.current_stage` without re-executing completed side-effecting steps, in `tests/integration/test_resumption_process_restart.py` — write failing first. If a genuine process-kill test proves infeasible within the timebox, this task must be re-scoped to an explicitly-labeled in-process simulation, with that limitation disclosed in `plan.md` §Known Limitations rather than left implicit. [FR-ORC-011]
+- [x] T105 [P] [US8] Integration test *(strengthened per Section 14 Independent Reviewer Gate, 2026-09-24)*: resumption is proven via an actual OS-level process kill and restart of the orchestration process (not an in-process function call simulating one), asserting it resumes from persisted `WorkflowInstance.current_stage` without re-executing completed side-effecting steps, in `tests/integration/test_resumption_process_restart.py` — write failing first. If a genuine process-kill test proves infeasible within the timebox, this task must be re-scoped to an explicitly-labeled in-process simulation, with that limitation disclosed in the project plan's known limitations rather than left implicit. [FR-ORC-011]
 - [x] T106 [P] [US8] Unit test: interruption and resumption both appear as audit events, in `tests/orchestration/test_resumption_audit.py` — write failing first
 
 ### Implementation for User Story 8

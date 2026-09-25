@@ -1,6 +1,6 @@
 # Final Principal Engineer Assessment
 
-*(doc §23 — reviewing the complete, finished repository as an independent and skeptical assessment panel. I assisted with development; I do not defend prior outputs, recommendations, or architectural choices here.)*
+This review examines the completed repository as an independent and skeptical assessment panel. The reviewer did not defend prior decisions or recommendations and focused on the final implemented state.
 
 ## Sources Reviewed
 
