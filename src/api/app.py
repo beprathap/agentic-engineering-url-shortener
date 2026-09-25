@@ -19,10 +19,6 @@ _settings = load_settings()
 _conn = ensure_db(_settings.db_path)
 _short_link_repo = ShortLinkRepository(_conn)
 
-register_links_routes(links_router, _short_link_repo)
-app.include_router(links_router)
-
-
 class HealthStatus(BaseModel):
     status: str
     details: str | None = None
@@ -35,3 +31,9 @@ def get_health() -> HealthStatus:
         return HealthStatus(status="ready")
     except Exception as exc:  # pragma: no cover - defensive
         return HealthStatus(status="not_ready", details=str(exc))
+
+
+# IMPORTANT: registered last. links_router contains a catch-all GET /{short_code}
+# route; any literal path registered after it would be shadowed by that pattern.
+register_links_routes(links_router, _short_link_repo)
+app.include_router(links_router)

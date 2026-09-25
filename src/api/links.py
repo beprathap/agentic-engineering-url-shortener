@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
-from fastapi.responses import JSONResponse
+from datetime import datetime
+
+from fastapi import APIRouter, Header
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
-from src.domain.short_link import generate_unique_short_code, utcnow
+from src.domain.short_link import compute_default_expiration, generate_unique_short_code, utcnow
 from src.domain.validation import InvalidUrlError, validate_url
 from src.persistence.short_links import ShortLink, ShortLinkRepository
 
@@ -33,7 +35,18 @@ class ErrorResponse(BaseModel):
 
 def register_links_routes(router: APIRouter, repo: ShortLinkRepository) -> None:
     @router.post("/v1/links", status_code=201, response_model=None, responses={400: {"model": ErrorResponse}})
-    def create_short_link(payload: CreateShortLinkRequest):
+    def create_short_link(payload: CreateShortLinkRequest, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
+        if idempotency_key is not None:
+            existing = repo.find_by_idempotency_key(idempotency_key)
+            if existing is not None:
+                return ShortLinkResponse(
+                    short_code=existing.short_code,
+                    target_url=existing.target_url,
+                    created_at=existing.created_at.isoformat(),
+                    expires_at=existing.expires_at.isoformat() if existing.expires_at else None,
+                    status=existing.status,
+                )
+
         try:
             validate_url(payload.target_url)
         except InvalidUrlError as exc:
@@ -44,12 +57,17 @@ def register_links_routes(router: APIRouter, repo: ShortLinkRepository) -> None:
 
         code = generate_unique_short_code(repo.is_active_code_taken)
         created_at = utcnow()
+        if payload.expires_at is not None:
+            expires_at = datetime.fromisoformat(payload.expires_at)
+        else:
+            expires_at = compute_default_expiration(created_at)
         link = ShortLink(
             short_code=code,
             target_url=payload.target_url,
             created_at=created_at,
-            expires_at=None,
+            expires_at=expires_at,
             status="active",
+            idempotency_key=idempotency_key,
         )
         repo.create(link)
 
@@ -57,6 +75,28 @@ def register_links_routes(router: APIRouter, repo: ShortLinkRepository) -> None:
             short_code=link.short_code,
             target_url=link.target_url,
             created_at=link.created_at.isoformat(),
-            expires_at=None,
+            expires_at=link.expires_at.isoformat() if link.expires_at else None,
             status=link.status,
         )
+
+    @router.get("/{short_code}", response_model=None, responses={404: {"model": ErrorResponse}, 410: {"model": ErrorResponse}})
+    def resolve_redirect(short_code: str):
+        link = repo.get(short_code)
+        now = utcnow()
+
+        if link is None:
+            repo.record_redirect_event(short_code, now, "not_found")
+            return JSONResponse(
+                status_code=404,
+                content=ErrorResponse(error_code="NOT_FOUND", message="No such short link.").model_dump(),
+            )
+
+        if link.expires_at is not None and link.expires_at < now:
+            repo.record_redirect_event(short_code, now, "expired")
+            return JSONResponse(
+                status_code=410,
+                content=ErrorResponse(error_code="EXPIRED", message="This short link has expired.").model_dump(),
+            )
+
+        repo.record_redirect_event(short_code, now, "redirected")
+        return RedirectResponse(url=link.target_url, status_code=302)
