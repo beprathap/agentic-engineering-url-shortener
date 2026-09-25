@@ -42,7 +42,7 @@ def get_health() -> HealthStatus:
         return HealthStatus(status="not_ready", details=str(exc))
 
 
-register_workflow_routes(workflows_router, _engine, _workflow_repo, _conn, _lock)
+register_workflow_routes(workflows_router, _engine, _workflow_repo, _audit_repo, _conn, _lock)
 app.include_router(workflows_router)
 
 # IMPORTANT: registered last. links_router contains a catch-all GET /{short_code}

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from src.orchestration.engine import OrchestrationEngine
 from src.orchestration.nodes.n1_ingestion import EmptyRequirementError, ingest_requirement
-from src.persistence.orchestration_store import WorkflowInstanceRepository
+from src.persistence.orchestration_store import AuditEventRepository, WorkflowInstanceRepository
 
 router = APIRouter()
 
@@ -34,10 +34,22 @@ class ErrorResponse(BaseModel):
     message: str
 
 
+class AuditEventResponse(BaseModel):
+    event_id: str
+    run_id: str
+    actor_type: str
+    action: str
+    occurred_at: str
+    result: str
+    affected_artifact: str | None
+    reason: str | None
+
+
 def register_workflow_routes(
     router: APIRouter,
     engine: OrchestrationEngine,
     workflow_repo: WorkflowInstanceRepository,
+    audit_repo: AuditEventRepository,
     conn: sqlite3.Connection,
     lock: threading.Lock,
 ) -> None:
@@ -77,3 +89,20 @@ def register_workflow_routes(
             created_at=instance.created_at.isoformat(),
             updated_at=instance.updated_at.isoformat(),
         )
+
+    @router.get("/v1/workflows/{run_id}/audit", response_model=list[AuditEventResponse])
+    def get_workflow_audit(run_id: str):
+        events = audit_repo.list_for_run(run_id)
+        return [
+            AuditEventResponse(
+                event_id=e.event_id,
+                run_id=e.run_id,
+                actor_type=e.actor_type,
+                action=e.action,
+                occurred_at=e.occurred_at.isoformat(),
+                result=e.result,
+                affected_artifact=e.affected_artifact,
+                reason=e.reason,
+            )
+            for e in events
+        ]
