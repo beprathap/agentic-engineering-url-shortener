@@ -139,6 +139,54 @@ def reject_architecture_gate(
     engine.transition(run_id, to_stage="N7", status="running", action="architecture_rejected", actor_type="human")
 
 
+def request_clarification(
+    engine: OrchestrationEngine,
+    run_id: str,
+    question: str,
+    impact: str,
+    current_assumption: str,
+    owner: str,
+    clock: Clock,
+) -> datetime:
+    """N4: present a structured clarification request (User Story 3). No default
+    is guessed here — Constitution Principle III forbids silently resolving
+    material ambiguity.
+    """
+    requested_at = clock.now()
+    engine._workflow_repo.update_stage(run_id, current_stage="N4", status="clarification_pending", updated_at=requested_at)
+    engine.emit(
+        run_id,
+        actor_type="system",
+        action="clarification_requested",
+        result="pending",
+        reason=f"question={question!r}; impact={impact!r}; current_assumption={current_assumption!r}; owner={owner!r}",
+    )
+    return requested_at
+
+
+def answer_clarification(
+    engine: OrchestrationEngine,
+    decision_repo: DecisionRepository,
+    run_id: str,
+    actor_role_capacity: str,
+    answer: str,
+) -> None:
+    """Record the human's clarification answer and resume at N2 (re-normalize
+    with the clarified input), not from zero (User Story 3 acceptance scenario 2).
+    """
+    decision_repo.create(
+        Decision(
+            decision_id=new_id(),
+            run_id=run_id,
+            decision_type="clarification_answer",
+            actor_role_capacity=actor_role_capacity,
+            rationale=answer,
+            created_at=utcnow(),
+        )
+    )
+    engine.transition(run_id, to_stage="N2", status="running", action="clarification_answered", actor_type="human")
+
+
 def check_gate_timeout(
     engine: OrchestrationEngine,
     run_id: str,
