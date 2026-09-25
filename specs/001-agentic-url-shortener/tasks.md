@@ -298,6 +298,16 @@ Single project per `plan.md` Project Structure: `src/`, `tests/` at repository r
 
 ---
 
+## Phase 12: Convergence
+
+**Purpose**: Appended by `/speckit-converge` (2026-09-25) after assessing the implemented codebase against `spec.md`/`plan.md`/`tasks.md`. These close three gaps between what `plan.md` and the accepted ADRs commit to and what the code currently does — found by inspection, not by a failing test (no prior task claimed these were done).
+
+- [ ] T118 Implement `src/telemetry/logging.py`: structured JSON logging to stdout, every log line tagged with the current `run_id`, per `plan.md` §Observability and Metrics ("structured JSON logs (stdout, tagged with run_id) as the operational view") and ADR-010's accepted Decision, which names this as the secondary evidence layer alongside the persisted `AuditEvent` table (missing)
+- [ ] T119 Add a dependency/license-scan `PolicyCheck` to `src/policy/checks.py::default_policy_checks()` that actually invokes `pip-audit` (or an equivalent) and records PASS/FAIL based on its real output, so N12 evaluates this automatically on every run, per `plan.md` §Security ("dependency manifest MUST be scanned... as part of N12") — currently `pip-audit` is only run manually and ad hoc (T116), not wired into the orchestration engine's own policy evaluation (missing)
+- [ ] T120 Wire the shared `retry_with_backoff` utility (`src/orchestration/engine.py`, T040) into N6 (`n6_decomposition.py`), N7 (`n7_design.py`), and N11 (`n11_documentation.py`), each of which `contracts/orchestration-state-machine.md` specifies as having "Retry Policy: Up to 3 bounded retries with backoff" but which currently have no failure handling at all (partial)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
